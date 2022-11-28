@@ -5,23 +5,47 @@ import * as React from 'react'
 import {Switch} from '../switch'
 
 function useToggle() {
-  const [on, setOn] = React.useState(false)
-  const toggle = () => setOn(!on)
+  const [internalOn, setOn] = React.useState(false)
+  const toggle = () => setOn(!internalOn)
 
-  // 🐨 Add a property called `togglerProps`. It should be an object that has
-  // `aria-pressed` and `onClick` properties.
-  return {on, toggle, togglerProps: {}}
+  function getTogglerProps<Props>({
+    onClick,
+    ...rest
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & Props) {
+    return {
+      'aria-pressed': internalOn,
+      onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        toggle()
+        onClick?.(e)
+      },
+      ...rest,
+    }
+  }
+
+  return {
+    on: internalOn,
+    toggle,
+    getTogglerProps,
+  }
 }
 
 function App() {
-  const {on, togglerProps} = useToggle()
+  const {on, getTogglerProps} = useToggle()
   return (
     <div>
-      <Switch on={on} {...togglerProps} />
-      <hr />
-      <button aria-label="custom-button" {...togglerProps}>
-        {on ? 'on' : 'off'}
-      </button>
+      <div>
+        <Switch {...getTogglerProps({on})} />
+        <hr />
+        <button
+          {...getTogglerProps({
+            'aria-label': 'custom-button',
+            onClick: () => console.info('onButtonClick'),
+            id: 'custom-button-id',
+          })}
+        >
+          {on ? 'on' : 'off'}
+        </button>
+      </div>
     </div>
   )
 }
