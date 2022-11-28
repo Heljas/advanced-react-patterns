@@ -20,22 +20,22 @@ function useDebounce<Callback extends (...args: Array<unknown>) => unknown>(
   callback: Callback,
   delay: number,
 ) {
-  // 🐨 create a latest ref (via useRef and useEffect) here
+  const latestRef = React.useRef(callback)
 
-  // use the latest version of the callback here:
-  // 💰 you'll need to pass an annonymous function to debounce. Do *not*
-  // simply change this to `debounce(latestCallbackRef.current, delay)`
-  // as that won't work. Can you think of why?
-  return React.useMemo(() => debounce(callback, delay), [callback, delay])
+  React.useEffect(() => {
+    latestRef.current = callback
+  })
+
+  return React.useMemo(
+    () => debounce((...args) => latestRef.current(...args), delay),
+    [delay],
+  )
 }
 
 function App() {
   const [step, setStep] = React.useState(1)
   const [count, setCount] = React.useState(0)
 
-  // 🦉 feel free to swap these two implementations and see they don't make
-  // any difference to the user experience
-  // const increment = React.useCallback(() => setCount(c => c + step), [step])
   const increment = () => setCount(c => c + step)
   const debouncedIncrement = useDebounce(increment, 3000)
   return (
